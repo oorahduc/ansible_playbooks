@@ -1,0 +1,37 @@
+---
+- name: Create RDS instance
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - ../secret.yml
+  tasks:
+
+  - name: Provisioning RDS
+    rds:
+      aws_access_key: "{{ ec2_access_key }}"
+      aws_secret_key: "{{ ec2_secret_key }}"
+      region: "{{ target_aws_region }}"
+      command: create
+      instance_name: "{{ rds_instance_name }}"
+      db_engine: "{{ DB_ENGINE }}"
+      size: 100
+      instance_type: "{{ rds_instance_type }}"
+      username: "{{ DB_USER }}"
+      password: "{{ DB_PASS }}"
+      wait: yes
+      wait_timeout: 300
+    register: rds
+
+  - name: Report RDS Endpoint
+    debug: msg="RDS endpoint is {{ item.instance.endpoint }}"
+    when: rds|success
+    with_items: rds
+
+  - name: Wait for MySQL RDS to be accessible on port 3306
+    wait_for:
+      port: 3306
+      host: "{{ item.endpoint }}"
+      timeout: 900
+    when: rds|success
+    register: rdsup
+    with_items: "{{ rds.instances }}"

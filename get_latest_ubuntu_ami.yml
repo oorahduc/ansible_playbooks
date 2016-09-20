@@ -1,0 +1,26 @@
+---
+- name: Provision Ubuntu Controller
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - ../secret.yml
+  tasks:
+  - name: Find latest Ubuntu AMI
+    ec2_ami_find:
+      aws_access_key: "{{ ec2_access_key }}"
+      aws_secret_key: "{{ ec2_secret_key }}"
+      region: "{{ target_aws_region }}"
+      name: "ubuntu/images/hvm-ssd/ubuntu-trusty-14.04-amd64-server-*"
+      virtualization_type: hvm
+      # platform: ubuntu
+      # owner: amazon
+      sort: name
+      sort_order: descending
+      # sort_end: 1
+      no_result_action: fail
+    register: found_amis
+  # - debug: var="{{ found_amis }}"
+  - set_fact:
+      ubuntu_ami_id: "{{ (found_amis.results | first).ami_id }}"
+  - debug: msg="{{ ubuntu_ami_id }}"
+

@@ -1,0 +1,23 @@
+---
+- name: Get latest Windows AMI
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - ../secret.yml
+  tasks:
+  - name: find current Windows AMI in this region
+    ec2_ami_find:
+      aws_access_key: "{{ ec2_access_key }}"
+      aws_secret_key: "{{ ec2_secret_key }}"
+      region: "{{ target_aws_region }}"
+      platform: windows
+      virtualization_type: hvm
+      owner: amazon
+      name: Windows_Server-2012-R2_RTM-English-64Bit-Base-*
+      no_result_action: fail
+      sort: name
+      sort_order: descending
+    register: found_amis
+  - set_fact:
+      win_ami_id: "{{ (found_amis.results | first).ami_id  }}"
+  - debug: msg="{{ win_ami_id }}"
